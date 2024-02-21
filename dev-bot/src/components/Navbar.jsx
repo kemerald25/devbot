@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import Home from "../pages/Home";
-import About from "../pages/About";
+import logo from '../assets/react.svg'
 
 function Navbar() {
     return (
         <>
             <nav>
+                <img className="logo" src={logo} />
                 <ul>
                     <li>
                         <Link to="/">Home</Link>
