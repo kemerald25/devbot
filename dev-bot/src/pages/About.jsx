@@ -1,8 +1,8 @@
-function Footer () {
+function About() {
     return(
         <>
         </>
     )
 }
 
-export default Footer;
+export default About;
