@@ -1,41 +1,45 @@
-// Import required modules
 const express = require('express');
-const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
+const axios = require('axios');
+const cors = require('cors');
 
-// Create an Express app
 const app = express();
 
-// Define the route to handle chatbot requests
+app.use(express.json());
+app.use(cors({
+    origin: 'http://localhost:5173'
+}));
+
+const model = "gpt-4";  // Replace with your model, e.g., "gpt-3.5-turbo", "gpt-3.5-turbo-16k", "azure-gpt-35-turbo", "abab5.5-chat", "ernie-bot", "ernie-bot-turbo", "gpt-4"
+const url = "https://app.ai.vanus.ai/api/v1/7a9e57123a924c9aaf51542a3a1952cb";  // Replace with the URL from your App dashboard in API Access
+
 app.post('/chatbot', async (req, res) => {
     try {
-        const model = "gpt-4";  // Replace with your model
-        const message = req.body.message; // Assuming the message is sent in the request body
+        const message = req.body.message;
 
-        // Set request headers
         const headers = {
             "Content-Type": "application/json",
             "x-vanusai-model": model,
             "x-vanusai-sessionid": uuidv4(),
-            "Accept": "text/event-stream"
+            "Accept": "text/event-stream" // Remove if you need plain text responses
         };
 
-        // Set request data
         const data = {
             "prompt": message,
-            "stream": true
+            "stream": true // Change to false if you need plain text responses
         };
 
-        // Make a POST request to the Vanus API
-        const response = await axios.post("https://ai.vanus.ai/app/integrations?id=65cf1d5c0ad3c0f4b01a88ac", data, { headers });
+        const response = await axios.post(url, data, { headers, responseType: "stream" });
 
-        // Stream the response data to the client
         response.data.on('data', (chunk) => {
             const lines = chunk.toString().split('\n');
+
             for (let line of lines) {
                 if (line.startsWith('data: ')) {
                     const jsonString = line.replace('data: ', '');
-                    res.write(JSON.parse(jsonString)); // Stream the parsed JSON to the client
+                    const parsedData = JSON.parse(jsonString);
+                    console.log(parsedData); // Log the parsed data
+                    res.json(parsedData); // Send the parsed JSON response from Vanus API back to the client
                 }
             }
         });
@@ -45,7 +49,6 @@ app.post('/chatbot', async (req, res) => {
     }
 });
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
